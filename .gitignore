@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual Environment
+venv/
+env/
+.venv/
+ENV/
+
+# Flask
+instance/
+.webassets-cache
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Model Output / Training Result
+models/saved/
+*.keras
+*.h5
+*.pkl
+*.joblib
+
+# Dataset Cache
+data/*.csv
+
+# Jika ingin tetap upload contoh dataset kecil, aktifkan ini:
+# !data/sample_btc_data.csv
+
+# Notebook / Experiment
+.ipynb_checkpoints/
+*.ipynb
+
+# TensorFlow / ML Cache
+tensorboard/
+runs/
+checkpoints/
+
+# Build / Dist
+build/
+dist/

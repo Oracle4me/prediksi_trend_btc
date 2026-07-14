@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prediksi Trend Bitcoin</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <div class="logo-icon">₿</div>
+            <h1>Bitcoin <span>Trend Predictor</span></h1>
+        </div>
+
+        <div class="header-badges">
+            <span class="badge badge-lstm">★ LSTM</span>
+            <span class="badge badge-xgb">XGBoost</span>
+            <span class="badge badge-rf">Random Forest</span>
+            <span class="badge">MLP</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Training Model Section -->
+        <div class="train-section">
+            <div class="train-header">
+                <div>
+                    <h2>Training Model</h2>
+                    <p>
+                        Klik tombol untuk memulai training empat model menggunakan data historis
+                        Bitcoin dari Yahoo Finance. LSTM digunakan sebagai model deep learning utama,
+                        sedangkan MLP, XGBoost, dan Random Forest digunakan sebagai model pembanding.
+                        Model terbaik dipilih berdasarkan F1 Score, dengan Balanced Accuracy sebagai
+                        pembanding jika nilai F1 sama.
+                    </p>
+                </div>
+
+                <button class="btn-train" id="btnTrain" onclick="startTraining()">
+                    Mulai Training
+                </button>
+            </div>
+
+            <div id="train-log-wrap">
+                <pre id="train-log"></pre>
+            </div>
+        </div>
+        <!-- End Training Model Section -->
+
+        <!-- Hero Stats -->
+        <div class="hero-stats">
+            <div class="stat-card">
+                <div class="stat-label">Harga BTC Terkini</div>
+                <div class="stat-val gold" id="btcPrice">—</div>
+                <div class="stat-sub">IDR</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">LSTM — Balanced Accuracy</div>
+                <div class="stat-val gold" id="lstmBalancedAcc">—</div>
+                <div class="stat-sub">Keseimbangan performa pada trend naik dan turun</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">LSTM — F1 Score</div>
+                <div class="stat-val" id="lstmF1Score">—</div>
+                <div class="stat-sub">Keseimbangan precision dan recall trend</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">LSTM — Recall</div>
+                <div class="stat-val" id="lstmRecall">—</div>
+                <div class="stat-sub">Kemampuan menangkap trend naik</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Model Terbaik Trend</div>
+                <div class="stat-val gold" id="bestTrendModel">—</div>
+                <div class="stat-sub">Berdasarkan F1 Score</div>
+            </div>
+        </div>
+        <!-- End Hero Stats -->
+
+        <!-- History BTC & Grafik Prediksi -->
+        <div class="grid-1">
+            <div class="card">
+                <div class="card-title">
+                    <span class="dot dot-blue"></span>
+                    Harga Bitcoin Historis
+                </div>
+
+                <div class="chart-wrap" style="margin-top: 50px;">
+                    <canvas id="chartHistory" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title" style="margin-bottom:0">
+                    <span class="dot dot-lstm"></span>
+                    Grafik Estimasi Harga Berbasis Prediksi Trend pada Data Test
+                </div>
+
+                <div class="tabs" style="margin-top:1rem;">
+                    <button class="tab-btn active t-lstm" onclick="switchTab('lstm', this)">
+                        ⬢ LSTM
+                    </button>
+
+                    <button class="tab-btn" onclick="switchTab('mlp', this)">
+                        ⬢ MLP
+                    </button>
+
+                    <button class="tab-btn t-rf" onclick="switchTab('rf', this)">
+                        ⬢ Random Forest
+                    </button>
+
+                    <button class="tab-btn t-xgb" onclick="switchTab('xgb', this)">
+                        ⬢ XGBoost
+                    </button>
+
+                    <button class="tab-btn" onclick="switchTab('all', this)">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                        Overlay Semua
+                    </button>
+                </div>
+
+                <div class="chart-wrap">
+                    <canvas id="chartPred" height="200"></canvas>
+                </div>
+            </div>
+
+        </div>
+        <!-- End History BTC & Grafik Prediksi -->
+
+        <!-- Forecast LSTM -->
+        <div class="forecast-layout">
+            <!-- Kiri: Grafik Forecast -->
+            <div class="card forecast-card forecast-chart-card">
+
+                <div class="forecast-header">
+                    <div class="card-title" style="margin-bottom:0">
+                        <span class="dot dot-purple"></span>
+                        Prediksi Trend 14 Hari dan Estimasi Harga Berbasis LSTM
+                    </div>
+
+                    <div class="forecast-badges">
+                        <span class="f-badge f-badge-actual">Aktual</span>
+                        <span class="f-badge f-badge-forecast">Estimasi Trend 14 Hari</span>
+                        <span class="f-badge f-badge-ci">Confidence Interval ±4%</span>
+                    </div>
+                </div>
+
+                <div id="forecastWrap">
+                    <div class="placeholder" id="forecastPlaceholder">
+                        <span>⚠️ Jalankan training untuk melihat prediksi LSTM</span>
+                    </div>
+
+                    <div class="chart-wrap" id="forecastChartWrap" style="display:none;">
+                        <canvas id="chartForecast" height="140"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Kanan: Ringkasan Forecast -->
+            <div class="forecast-side">
+                <div class="forecast-stats" id="forecastStats" style="display:none;">
+                    <div class="fstat">
+                        <div class="fstat-label">Estimasi Harga Horizon 14 Hari</div>
+                        <div class="fstat-val purple" id="fstatEnd">—</div>
+                    </div>
+
+                    <div class="fstat">
+                        <div class="fstat-label">Perubahan dari Harga Terakhir</div>
+                        <div class="fstat-val" id="fstatChg">—</div>
+                    </div>
+
+                </div>
+
+                <div class="trend-card" id="trendCard" style="display:none;">
+                    <div class="trend-icon" id="trendIcon">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+
+                    <div class="trend-content">
+                        <div class="trend-label">
+                            Trend Prediksi LSTM 14 Hari
+                        </div>
+
+                        <div class="trend-note" id="trendNote">
+                            —
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="forecast-warning">
+                    <div class="forecast-warning-content">
+                        <div class="forecast-warning-title">
+                            Disclaimer Prediksi LSTM
+                        </div>
+
+                        <div class="forecast-warning-text">
+                            Model LSTM memprediksi arah trend untuk horizon 14 hari ke depan.
+                            Estimasi harga diturunkan dari hasil prediksi trend, bukan prediksi harga regresi murni
+                            dan bukan saran investasi.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Forecast LSTM -->
+
+        <!-- Metrics Section -->
+        <div class="metrics-layout">
+            <!-- Kiri: Tabel Perbandingan -->
+            <div class="card metrics-card">
+                <div class="card-title">
+                    <span class="dot dot-lstm"></span>
+                    Perbandingan Metrik Evaluasi Trend Model
+                </div>
+
+                <div class="metric-note">
+                    <strong>Catatan:</strong>
+                    Balanced Accuracy, Precision, Recall, dan F1 Score digunakan untuk
+                    mengevaluasi performa model dalam memprediksi arah trend naik dan turun.
+                    Model terbaik dipilih berdasarkan F1 Score, dengan Balanced Accuracy
+                    sebagai pembanding jika nilai F1 sama.
+                    Estimasi harga hanya menjadi turunan dari hasil prediksi trend, bukan prediksi harga regresi murni.
+                </div>
+
+                <div id="metricsWrap">
+                    <div class="placeholder">
+                        <div class="spinner"></div>
+                        <span>Menunggu training selesai…</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kanan: Detail LSTM -->
+            <div class="card lstm-card metrics-detail-card">
+                <div class="card-title">
+                    <span class="dot dot-lstm"></span>
+                    Detail Metrik Trend LSTM
+                </div>
+
+                <div id="lstmDetail">
+                    <div class="placeholder">
+                        <span>Menunggu training…</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="card loss-history-card">
+            <div class="card-title">
+                <span class="dot dot-lstm"></span>
+                Grafik Perbandingan 4 Model
+            </div>
+
+            <div class="chart-wrap loss-chart-wrap">
+                <canvas id="chartModelCompare" height="110"></canvas>
+            </div>
+        </div>
+
+        <!-- Kesimpulan -->
+        <div class="verdict" id="verdict" style="display:none">
+            <h3>Kesimpulan Evaluasi Trend</h3>
+            <p id="verdictText"></p>
+        </div>
+        <!-- End Kesimpulan -->
+
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>
