@@ -4,42 +4,65 @@ Berikut alur untuk memahami bagaimana prediksi trend BTC berjalan
 
 Yahoo Finance / CSV
         ↓
-Data historis Bitcoin (2021–sekarang)
+Data Historis Bitcoin (2021–sekarang)
         ↓
 Feature Engineering
-Membuat fitur teknikal dari data Open, High, Low, Close, dan Volume,
-seperti Return, Moving Average, Momentum, RSI, MACD, ATR,
-Volatility, serta indikator Volume.
+Membuat fitur teknikal dari data Open, High, Low, Close, dan Volume:
+
+• Return
+• Moving Average
+• Momentum
+• RSI
+• MACD
+• ATR
+• Volume Features
+
         ↓
 Membuat Label Target
+
 Menghitung Future Return 14 hari ke depan.
 
+Future Return = (Close[t+14] / Close[t]) - 1
+
 Jika Future Return > 0
-→ Label = 1 (Trend Naik / Bullish)
-NOTED: Kenapa hanya ada Bullish dan Bearish karena kondisi Sideways sangat sulit didefinisikan secara objektif menggunakan Future Return.
+→ Label = 1 (Bullish / Naik)
+
 Jika Future Return ≤ 0
-→ Label = 0 (Trend Turun / Bearish)
+→ Label = 0 (Bearish / Tidak Naik)
+
+Catatan:
+Kelas Sideways tidak digunakan karena sulit didefinisikan secara objektif.
+Pergerakan harga yang sangat kecil tetap dapat menghasilkan ambiguitas,
+sehingga penelitian difokuskan pada klasifikasi biner Bullish dan Bearish.
+
         ↓
-Split Data
-80% data awal → Training
+Split Data Time Series
+
+80% data awal  → Training
 20% data akhir → Testing
+
         ↓
 Training Model
+
 • Random Forest
 • XGBoost
-• MLP
+• MLP (Multi-Layer Perceptron)
 • LSTM
+
         ↓
 Prediksi Trend
-Setiap model menghasilkan probabilitas bullish.
+
+Setiap model menghasilkan probabilitas Bullish.
 
 Probability ≥ Threshold
-→ Trend Naik (1)
+→ Bullish (1)
 
 Probability < Threshold
-→ Trend Turun (0)
+→ Bearish (0)
+
         ↓
 Evaluasi Model
+
 Menggunakan metrik klasifikasi:
 
 • Trend Accuracy
@@ -48,40 +71,56 @@ Menggunakan metrik klasifikasi:
 • Recall
 • F1 Score
 • Confusion Matrix
+
         ↓
 Menyimpan Hasil
+
 • Model
 • predictions.csv
 • metrics.json
 • training_summary.json
 • training_summary.csv
+
         ↓
 Dashboard
+
 Menampilkan:
 
 • Harga Bitcoin terkini
-• Prediksi trend 30 hari
+• Prediksi trend 14 hari ke depan
 • Estimasi harga berbasis trend
 • Grafik seluruh model
 • Perbandingan metrik evaluasi
+  - Balanced Accuracy
+  - Precision
+  - Recall
+  - F1 Score
+• Kesimpulan performa model
 
 #############################################################################
 
 
-Kesimpulan panjang:
-Sistem mengambil data historis Bitcoin dari Yahoo Finance atau file CSV, kemudian melakukan feature engineering untuk membangun berbagai indikator teknikal dari data Open, High, Low, Close, dan Volume. 
-Selanjutnya sistem membuat label target berdasarkan Future Return selama 14 hari ke depan, di mana return positif diberi label Bullish (1) dan return tidak positif diberi label Bearish (0). 
-Dataset kemudian dibagi menjadi data training dan testing sebelum digunakan untuk melatih model Random Forest, XGBoost, MLP, Simple RNN, dan LSTM. 
-Setiap model menghasilkan probabilitas terjadinya tren naik yang kemudian dikonversi menjadi label Bullish atau Bearish menggunakan nilai threshold. Kinerja model dievaluasi menggunakan metrik klasifikasi seperti Accuracy, Balanced Accuracy, Precision, Recall, F1 Score, dan Confusion Matrix. 
-Seluruh hasil evaluasi, model, dan prediksi disimpan serta ditampilkan melalui dashboard untuk memudahkan analisis dan perbandingan performa antar model.
+## Kesimpulan panjang:
+Sistem mengambil data historis Bitcoin dari Yahoo Finance atau file CSV lokal, kemudian melakukan proses feature engineering untuk membangun berbagai indikator teknikal dari data Open, High, Low, Close, dan Volume.
+Selanjutnya sistem membentuk label target menggunakan Future Return selama 14 hari ke depan. Jika harga Bitcoin setelah 14 hari lebih tinggi dibandingkan harga saat ini maka data diberi label Bullish (1), sedangkan jika tidak lebih tinggi maka diberi label Bearish (0).
+Dataset kemudian dibagi secara kronologis menjadi data training dan testing untuk menjaga karakteristik data time-series. Data training digunakan untuk melatih model Random Forest, XGBoost, MLP, dan LSTM.
+Setiap model menghasilkan probabilitas terjadinya tren naik (Bullish). Probabilitas tersebut kemudian dikonversi menjadi label Bullish atau Bearish menggunakan nilai threshold tertentu.
+Kinerja model dievaluasi menggunakan metrik klasifikasi yaitu Balanced Accuracy, Precision, Recall, F1 Score, dan Confusion Matrix. Seluruh hasil evaluasi, model yang telah dilatih, serta hasil prediksi disimpan dan ditampilkan melalui dashboard untuk memudahkan analisis serta perbandingan performa antar model.
+Tujuan utama sistem bukan memprediksi harga Bitcoin secara pasti, melainkan mengidentifikasi kemungkinan arah pergerakan tren Bitcoin dalam 14 hari ke depan berdasarkan pola historis yang telah dipelajari model.
 
-Kesimpulan singkat:
-Data historis BTC dipakai untuk membuat fitur.
-Label dibuat berdasarkan apakah BTC naik/turun setelah 14 hari.
-Model dilatih untuk mengenali pola sebelum kenaikan/penurunan.
-Output model adalah probabilitas naik dan label trend.
-Evaluasi memakai metrik klasifikasi, bukan metrik harga.
+## Kesimpulan singkat:
+Data historis Bitcoin digunakan untuk membangun fitur teknikal.
+Label dibuat berdasarkan apakah harga Bitcoin naik atau tidak dalam 14 hari ke depan.
+Model dilatih untuk mengenali pola yang sering muncul sebelum terjadinya kenaikan atau penurunan harga.
+Output model berupa probabilitas Bullish dan label arah trend.
+Evaluasi dilakukan menggunakan metrik klasifikasi, bukan metrik prediksi harga.
 
+## Mengapa Balanced Accuracy, Precision, Recall, dan F1 Score Sulit Mencapai Nilai di Atas 60%?
+Model pada penelitian ini tidak digunakan untuk memprediksi harga Bitcoin secara langsung, melainkan untuk mengklasifikasikan arah trend Bitcoin (Bullish atau Bearish) berdasarkan pola historis data dari tahun 2021 hingga data terbaru.
+Prediksi trend merupakan permasalahan yang cukup menantang karena pergerakan Bitcoin bersifat dinamis dan dipengaruhi oleh banyak faktor yang tidak seluruhnya tercermin dalam data historis, seperti sentimen pasar, kondisi ekonomi global, kebijakan pemerintah, dan berbagai peristiwa yang terjadi secara tiba-tiba.
+Selain itu, target klasifikasi dibentuk menggunakan Future Return 14 hari ke depan. Dalam beberapa kondisi, pola historis yang mirip dapat menghasilkan arah trend yang berbeda sehingga meningkatkan tingkat kesalahan klasifikasi.
+Oleh karena itu, nilai Balanced Accuracy, Precision, Recall, dan F1 Score yang berada pada kisaran 50%-60% masih termasuk hasil yang wajar untuk kasus prediksi arah trend pada pasar cryptocurrency. Hasil tersebut menunjukkan bahwa model mampu menangkap sebagian pola historis yang berhubungan dengan perubahan trend, meskipun tidak dapat merepresentasikan seluruh faktor yang memengaruhi pergerakan pasar Bitcoin.
+## Arah Prediksi 
 Maka pertanyaan bukan besok BTC harganya berapa? 
 Namun:
 Berdasarkan pola historis, BTC cenderung naik atau turun dalam 14 hari ke depan?
